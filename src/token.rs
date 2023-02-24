@@ -2,7 +2,6 @@ use std::{fmt, rc::Rc};
 
 #[derive(PartialEq)]
 pub enum Token {
-    // Type
     Int(i64),
     String(Rc<String>),
     Bool(bool),
@@ -66,20 +65,27 @@ pub enum Token {
     Semicolon,          // `;`
     Assign,             // `=`
 
-    Equal,         // `==`
-    LessEqual,     // `<=`
-    GreaterEqual,  // `>=`
-    NotEqual,      // `!=`
-    PlusEqual,     // `+=`
-    MinusEqual,    // `-=
-    MultiplyEqual, // `*=`
-    DivideEqual,   // `/=`
-    SurplusEqual,  // `%=`
-    XorEqual,      // `^=`
-    AndEqual,      // `&=`
-    OrEqual,       // `|=`
-    SingleArrow,   // `->`
-    DoubleArrow,   // `=>`
+    // Double operator
+    Equal,          // `==`
+    LessEqual,      // `<=`
+    GreaterEqual,   // `>=`
+    NotEqual,       // `!=`
+    PlusAssign,     // `+=`
+    MinusAssign,    // `-=
+    MultiplyAssign, // `*=`
+    DivideAssign,   // `/=`
+    SurplusAssign,  // `%=`
+    XorAssign,      // `^=`
+    AndAssign,      // `&=`
+    OrAssign,       // `|=`
+    SingleArrow,    // `->`
+    DoubleArrow,    // `=>`
+    LeftShift,      // `<<`
+    RightShift,     // `>>`
+
+    // Triple operator
+    LeftShiftAssign,  // `<<=`
+    RightShiftAssign, // `>>=`
 }
 
 impl fmt::Debug for Token {
@@ -168,16 +174,21 @@ impl fmt::Debug for Token {
             Token::LessEqual => "<=",
             Token::GreaterEqual => ">=",
             Token::NotEqual => "!=",
-            Token::PlusEqual => "+=",
-            Token::MinusEqual => "-=",
-            Token::MultiplyEqual => "*=",
-            Token::DivideEqual => "/=",
-            Token::SurplusEqual => "^=",
-            Token::XorEqual => "^=",
-            Token::AndEqual => "&",
-            Token::OrEqual => "|",
+            Token::PlusAssign => "+=",
+            Token::MinusAssign => "-=",
+            Token::MultiplyAssign => "*=",
+            Token::DivideAssign => "/=",
+            Token::SurplusAssign => "^=",
+            Token::XorAssign => "^=",
+            Token::AndAssign => "&",
+            Token::OrAssign => "|",
             Token::SingleArrow => "->",
             Token::DoubleArrow => "=>",
+            Token::LeftShift => "<<",
+            Token::RightShift => ">>",
+
+            Token::LeftShiftAssign => "<<=",
+            Token::RightShiftAssign => ">>=",
         };
         write!(f, "{str}")
     }

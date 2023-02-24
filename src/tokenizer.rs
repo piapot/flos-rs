@@ -59,7 +59,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::PlusEqual
+                            Token::PlusAssign
                         }
                         _ => Token::Plus,
                     };
@@ -72,7 +72,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::MinusEqual
+                            Token::MinusAssign
                         }
                         b'>' => {
                             self.pos += 1;
@@ -96,7 +96,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::MultiplyEqual
+                            Token::MultiplyAssign
                         }
                         _ => Token::Asterisk,
                     };
@@ -109,7 +109,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::DivideEqual
+                            Token::DivideAssign
                         }
                         b'/' => {
                             // handle line comments
@@ -142,7 +142,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::AndEqual
+                            Token::AndAssign
                         }
                         _ => Token::Ampersand,
                     };
@@ -175,7 +175,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::XorEqual
+                            Token::XorAssign
                         }
                         _ => Token::Circumflex,
                     };
@@ -188,7 +188,7 @@ impl Tokenizer {
                         b'=' => {
                             self.pos += 1;
                             length += 1;
-                            Token::OrEqual
+                            Token::OrAssign
                         }
                         _ => Token::VerticalLine,
                     };
@@ -231,6 +231,18 @@ impl Tokenizer {
                             length += 1;
                             Token::LessEqual
                         }
+                        b'<' => {
+                            self.pos += 1;
+                            length += 1;
+                            match self.peek_byte() {
+                                b'=' => {
+                                    self.pos += 1;
+                                    length += 1;
+                                    Token::LeftShiftAssign
+                                }
+                                _ => Token::LeftShift,
+                            }
+                        }
                         _ => Token::LessThan,
                     };
                     my_push_token(self.pos - length, self.pos, self.line, token);
@@ -243,6 +255,18 @@ impl Tokenizer {
                             self.pos += 1;
                             length += 1;
                             Token::GreaterEqual
+                        }
+                        b'>' => {
+                            self.pos += 1;
+                            length += 1;
+                            match self.peek_byte() {
+                                b'=' => {
+                                    self.pos += 1;
+                                    length += 1;
+                                    Token::RightShiftAssign
+                                }
+                                _ => Token::RightShift,
+                            }
                         }
                         _ => Token::GreaterThan,
                     };
@@ -428,17 +452,13 @@ mod tests {
         let (tokens, spans) = Tokenizer::new(input.into()).tokenize();
 
         let token = tokens.get(1).unwrap();
-        let expect_first_token =
+        let expect_second_token =
             Token::LineComment(Rc::new(String::from(" This is the second line comment.")));
-        assert_eq!(token, &expect_first_token);
+        assert_eq!(token, &expect_second_token);
 
         let span = spans.get(1).unwrap();
-        let expect_first_token = Span {
-            start: 35,
-            end: 70,
-            line: 2,
-        };
-        assert_eq!(span, &expect_first_token);
+        let expect_second_token = Span::new(35, 70, 2);
+        assert_eq!(span, &expect_second_token);
     }
 
     #[test]
@@ -448,16 +468,12 @@ mod tests {
         let (tokens, spans) = Tokenizer::new(input.into()).tokenize();
 
         let token = tokens.get(1).unwrap();
-        let expect_first_token =
+        let expect_second_token =
             Token::BlockComment(Rc::new(String::from(" This is\nthe second line comment. ")));
-        assert_eq!(token, &expect_first_token);
+        assert_eq!(token, &expect_second_token);
 
         let span = spans.get(1).unwrap();
-        let expect_first_token = Span {
-            start: 39,
-            end: 76,
-            line: 3,
-        };
-        assert_eq!(span, &expect_first_token);
+        let expect_second_token = Span::new(39, 76, 3);
+        assert_eq!(span, &expect_second_token);
     }
 }
