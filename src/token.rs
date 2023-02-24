@@ -1,15 +1,14 @@
 use std::{fmt, rc::Rc};
 
-#[allow(unused)]
 #[derive(PartialEq)]
 pub enum Token {
     // Type
     Int(i64),
     String(Rc<String>),
-    Char(char),
     Bool(bool),
     Identifier(Rc<String>),
-    Comment(Rc<String>),
+    LineComment(Rc<String>),
+    BlockComment(Rc<String>),
 
     // KeyWord
     Let,
@@ -88,27 +87,27 @@ impl fmt::Debug for Token {
         let s: String;
         let str = match self {
             Token::Int(value) => {
-                s = format!("{value}");
+                s = format!("Int(\"{value}\")");
                 s.as_str()
             }
             Token::String(value) => {
-                s = format!("{value}");
-                s.as_str()
-            }
-            Token::Char(value) => {
-                s = format!("{value}");
+                s = format!("String(\"{value}\")");
                 s.as_str()
             }
             Token::Bool(value) => {
-                s = format!("{value}");
+                s = format!("Bool(\"{value}\")");
                 s.as_str()
             }
             Token::Identifier(value) => {
-                s = format!("{value}");
+                s = format!("Identifier(\"{value}\")");
                 s.as_str()
             }
-            Token::Comment(value) => {
-                s = format!("{value}");
+            Token::LineComment(value) => {
+                s = format!("LineComment(\"{value}\")");
+                s.as_str()
+            }
+            Token::BlockComment(value) => {
+                s = format!("BlockComment(\"{value}\")");
                 s.as_str()
             }
             Token::Let => "let",

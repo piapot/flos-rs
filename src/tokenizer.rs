@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::token::Token;
 
 static SYNTAX_ERROR_MSG: &str = "Find Uncaught SyntaxError: Invalid or unexpected token";
@@ -345,11 +347,55 @@ impl Tokenizer {
     }
 
     fn parse_line_comment(&mut self) -> (Token, usize) {
-        todo!()
+        let mut length = 0;
+        let mut bytes: Vec<u8> = vec![];
+        while self.pos < self.source_length {
+            match self.peek_byte() {
+                b'\n' => {
+                    break;
+                }
+                b => {
+                    self.pos += 1;
+                    length += 1;
+                    bytes.push(b);
+                }
+            }
+        }
+        let token = Token::LineComment(Rc::new(String::from_utf8(bytes).unwrap()));
+        (token, length)
     }
 
-    fn parse_block_comment(&self) -> (Token, usize) {
-        todo!()
+    fn parse_block_comment(&mut self) -> (Token, usize) {
+        let mut length = 0;
+        let mut bytes: Vec<u8> = vec![];
+        while self.pos < self.source_length {
+            match self.peek_byte() {
+                b'*' => {
+                    self.pos += 1;
+                    if self.is_eof() {
+                        break;
+                    }
+                    if self.peek_byte() == b'/' {
+                        self.pos += 1;
+                        length += 1;
+                        break;
+                    } else {
+                        length += 1;
+                        bytes.push(b'*');
+                    }
+                }
+                b => {
+                    if b == b'\n' {
+                        self.line += 1;
+                    }
+                    self.pos += 1;
+                    length += 1;
+                    bytes.push(b);
+                }
+            }
+        }
+        let token = Token::BlockComment(Rc::new(String::from_utf8(bytes).unwrap()));
+        (token, length)
     }
 
     fn parse_string(&self) -> (Token, usize) {
@@ -363,10 +409,6 @@ impl Tokenizer {
     fn parse_identifier(&self) -> (Token, usize) {
         todo!()
     }
-
-    fn parse_whitespace(&self) -> (Token, usize) {
-        todo!()
-    }
 }
 
 #[cfg(test)]
@@ -378,5 +420,44 @@ mod tests {
         let input = "";
         let output = Tokenizer::new(input.into()).tokenize();
         assert_eq!((vec![], vec![]), output)
+    }
+
+    #[test]
+    fn test_parse_line_comment() {
+        let input = "// This is the first line comment.\n// This is the second line comment.";
+        let (tokens, spans) = Tokenizer::new(input.into()).tokenize();
+
+        let token = tokens.get(1).unwrap();
+        let expect_first_token =
+            Token::LineComment(Rc::new(String::from(" This is the second line comment.")));
+        assert_eq!(token, &expect_first_token);
+
+        let span = spans.get(1).unwrap();
+        let expect_first_token = Span {
+            start: 35,
+            end: 70,
+            line: 2,
+        };
+        assert_eq!(span, &expect_first_token);
+    }
+
+    #[test]
+    fn test_parse_block_comment() {
+        let input =
+            "/* This is the first line comment. */\n/* This is\nthe second line comment. */";
+        let (tokens, spans) = Tokenizer::new(input.into()).tokenize();
+
+        let token = tokens.get(1).unwrap();
+        let expect_first_token =
+            Token::BlockComment(Rc::new(String::from(" This is\nthe second line comment. ")));
+        assert_eq!(token, &expect_first_token);
+
+        let span = spans.get(1).unwrap();
+        let expect_first_token = Span {
+            start: 39,
+            end: 76,
+            line: 3,
+        };
+        assert_eq!(span, &expect_first_token);
     }
 }
