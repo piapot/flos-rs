@@ -1,22 +1,22 @@
 mod token;
 
-pub use token::{Token, TokenKind, TokenSpan};
+pub use token::{Token, TokenKind};
 
 #[derive(Debug)]
 pub struct Tokenizer {
-    input: Vec<u8>,
+    source: Vec<u8>,
     cursor: usize,
     line: usize,
     column: usize,
 }
 
 impl Tokenizer {
-    pub fn new(input: &str) -> Self {
+    pub fn new(source: Vec<u8>) -> Self {
         Self {
-            input: Vec::from(input),
+            source,
             cursor: 0,
-            line: 1,
-            column: 0,
+            line: 1,   // >= 1
+            column: 0, // >= 0
         }
     }
 
@@ -31,7 +31,7 @@ impl Tokenizer {
     }
 
     pub fn next(&mut self) -> Option<Token> {
-        if let Some(char) = self.input.get(self.cursor) {
+        if let Some(char) = self.source.get(self.cursor) {
             match *char {
                 b'\n' => self.tokenize_linefeed(),
                 c if c != b'\n' && c.is_ascii_whitespace() => {
@@ -66,26 +66,23 @@ impl Tokenizer {
     }
 
     fn tokenize_linefeed(&mut self) -> Option<Token> {
-        self.input.get(self.cursor).map(|text| {
+        self.source.get(self.cursor).map(|text| {
             let kind = TokenKind::Linefeed;
             let text = vec![*text];
             let line = self.line;
-            let column = self.column;
-            let start = self.cursor;
-            let end = start + 1;
-            self.cursor = end;
+            let start_column = self.column;
+            let end_column = self.column + 1;
+            self.cursor += 1;
             self.line += 1;
-            self.column = 1;
-            let span = TokenSpan::new(line, column, start, end);
-            Token::new(kind, text, span)
+            self.column = 0;
+            Token::new(kind, text, line, [start_column, end_column])
         })
     }
 
     fn take_while(&mut self, kind: TokenKind, f: fn(u8) -> bool) -> Option<Token> {
-        let start = self.cursor;
         let mut chars = vec![];
 
-        while let Some(char) = self.input.get(self.cursor) {
+        while let Some(char) = self.source.get(self.cursor) {
             if f(*char) {
                 self.cursor += 1;
                 chars.push(*char);
@@ -94,18 +91,35 @@ impl Tokenizer {
             }
         }
 
-        let length = chars.len();
+        let chars_length = chars.len();
 
-        if length != 0 {
+        if chars_length != 0 {
             let text = chars;
             let line = self.line;
-            let column = self.column;
-            let end = start + length;
-            let span = TokenSpan::new(line, column, start, end);
-            self.column += text.len();
-            Some(Token::new(kind, text, span))
+            let start_column = self.column;
+            let end_column = start_column + chars_length;
+            self.column = end_column;
+            Some(Token::new(kind, text, line, [start_column, end_column]))
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokenizer() {
+        let source = r#"
+            x = 1
+            y = 2
+            z = x + y
+        "#
+        .trim();
+        let mut tokenizer = Tokenizer::new(source.into());
+        let tokens = tokenizer.scan();
+        println!("{tokens:?}");
     }
 }
